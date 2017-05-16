@@ -3,20 +3,24 @@ package audio
 type Buffer []float64
 type Channel chan Buffer
 
-type Renderer interface {
+type RenderNode interface {
+	SetSampleRate(sampleRate float64)
 	Render() (uint, error)
 }
 
-type Input interface {
-	Connect(c Channel, input uint) (bool, error)
-	Disconnect(input uint)
+type InputNode interface {
+	NumInputs() uint
+	Connect(c Channel, i uint) (bool, Error)
+	Disconnect(i uint)
 }
 
-type Output interface {
+type OutputNode interface {
+	NumChannels() uint
 	Channel(i uint) Channel
 }
 
-type InputOutput interface {
-	Input
-	Output
+type Error string
+
+func (err *Error) Error() string {
+	return string(err)
 }
