@@ -27,10 +27,12 @@ func TestNewOutput(t *testing.T) {
 		t.Fatal("Failed to instantiate output node.", err)
 	}
 	validateOutput(t, o, 44100.0)
+}
 
-	o, err = NewOutput(0)
+func TestNewOutputZeroSampleRate(t *testing.T) {
+	o, _ := NewOutput(0)
 	if o != nil {
-		t.Fatal("Instantiated output mode with invalid sample rate.")
+		t.Error("Instantiated output node with invalid sample rate: 0")
 	}
 }
 
@@ -41,6 +43,15 @@ func TestSetSampleRate(t *testing.T) {
 	validateOutput(t, o, 48000.0)
 }
 
+func TestSetSampleRateZero(t *testing.T) {
+	o, _ := NewOutput(44100.0)
+
+	o.SetSampleRate(0)
+	if o.Stream != nil {
+		t.Error("Set invalid sample rate: 0")
+	}
+}
+
 func TestRender(t *testing.T) {}
 
 func TestNumImputs(t *testing.T) {
@@ -48,6 +59,26 @@ func TestNumImputs(t *testing.T) {
 	got, want := o.NumInputs(), len(o.inputs)
 	if got != want {
 		t.Error("NumInputs() returned %d, expected %d", got, want)
+	}
+}
+
+func TestConnect(t *testing.T) {
+	o, _ := NewOutput(44100.0)
+
+	c := make(Channel)
+	ok, err := o.Connect(c, 0)
+	if !ok {
+		t.Error("Failed to channel to input 0.", err)
+	}
+}
+
+func TestConnectInvalidChannel(t *testing.T) {
+	o, _ := NewOutput(44100.0)
+
+	c := make(Channel)
+	ok, _ := o.Connect(c, 256)
+	if ok {
+		t.Error("Unexpected connection to input 256.")
 	}
 }
 
