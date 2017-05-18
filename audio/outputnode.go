@@ -12,7 +12,7 @@ type Output struct {
 }
 
 func NewOutput(sampleRate float64) (*Output, error) {
-	output := Output{nil, sampleRate, nil}
+	output := Output{sampleRate: sampleRate}
 
 	device, err := portaudio.DefaultOutputDevice()
 	if device == nil {
@@ -26,8 +26,8 @@ func NewOutput(sampleRate float64) (*Output, error) {
 		return nil, err
 	}
 
-	minSize := device.defaultHighOutputLatency.Nanoseconds() / (uint(sampleRate) * 1E9)
-	bufferSize := 0
+	minSize := int(device.DefaultHighInputLatency.Seconds() * sampleRate)
+	bufferSize := 1
 	for bufferSize < minSize {
 		bufferSize <<= 1
 	}
@@ -53,11 +53,11 @@ func (output *Output) initOutputStream() (bool, error) {
 	return true, nil
 }
 
-func (output *Output) Render()         {}
-func (output *Output) NumInputs() uint { return len(inputs) }
+func (output *Output) Render()        {}
+func (output *Output) NumInputs() int { return len(output.inputs) }
 
-func (output *Output) Connect(c Channel, i uint) (bool, Error) {
-	if i >= len(inputs) {
+func (output *Output) Connect(c Channel, i int) (bool, error) {
+	if i >= len(output.inputs) {
 		return false, Error("Input index out of bounds.")
 	}
 
@@ -65,18 +65,18 @@ func (output *Output) Connect(c Channel, i uint) (bool, Error) {
 	return true, nil
 }
 
-func (output *Output) Disconnect(i uint) {
-	if i < len(inputs) {
+func (output *Output) Disconnect(i int) {
+	if i < len(output.inputs) {
 		output.inputs[i] = nil
 	}
 }
 
-func (output *Output) streamCallback(outputBuffers [][]float64) {
-	for i, outputBuffer := range outputBuffers {
+func (output *Output) streamCallback(outputBuffers []Buffer) {
+	for i, outputChannelBuffer := range outputBuffers {
 		inputChannel := output.inputs[i]
 		overflow := output.overflow[i]
 
-		var j uint
+		j := 0
 		// If remaining overflow, copy to output
 		if len(overflow) > 0 {
 			j += copy(outputChannelBuffer, overflow)
@@ -85,16 +85,14 @@ func (output *Output) streamCallback(outputBuffers [][]float64) {
 		// Receive buffers from input and copy to output
 		for j < len(outputChannelBuffer) {
 			inputChannelBuffer := <-inputChannel
-			j += copy(outputChannelBuffer[j:], inputChannelBuffer)
-		}
-
-		// Store overflowing buffer for next callback
-		if j > len(outputChannelBuffer) {
-			remaining := j - len(outputChannelBuffer)
-			output.overflow[i] = overflow[:remaining]
-			copy(output.overflow[i], inputChannelBuffer[remaining:])
-		} else {
-			output.overflow[i] = overflow[:0]
+			j += copy(outputChannelBuffer[j:], inputChannelBuffer) // Store overflowing buffer for next callback
+			if j > len(outputChannelBuffer) {
+				remaining := j - len(outputChannelBuffer)
+				output.overflow[i] = overflow[:remaining]
+				copy(output.overflow[i], inputChannelBuffer[remaining:])
+			} else {
+				output.overflow[i] = overflow[:0]
+			}
 		}
 	}
 }
