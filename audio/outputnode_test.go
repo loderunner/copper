@@ -22,7 +22,7 @@ func tearDown() {
 }
 
 func TestNewOutput(t *testing.T) {
-	o, err := NewOutput(44100.0)
+	o, err := NewMainOutput(44100.0)
 	if o == nil {
 		t.Fatal("Failed to instantiate output node.", err)
 	}
@@ -30,21 +30,21 @@ func TestNewOutput(t *testing.T) {
 }
 
 func TestNewOutputZeroSampleRate(t *testing.T) {
-	o, _ := NewOutput(0)
+	o, _ := NewMainOutput(0)
 	if o != nil {
 		t.Error("Instantiated output node with invalid sample rate: 0")
 	}
 }
 
 func TestSetSampleRate(t *testing.T) {
-	o, _ := NewOutput(44100.0)
+	o, _ := NewMainOutput(44100.0)
 
 	o.SetSampleRate(48000.0)
 	validateOutput(t, o, 48000.0)
 }
 
 func TestSetSampleRateZero(t *testing.T) {
-	o, _ := NewOutput(44100.0)
+	o, _ := NewMainOutput(44100.0)
 
 	o.SetSampleRate(0)
 	if o.Stream != nil {
@@ -55,7 +55,7 @@ func TestSetSampleRateZero(t *testing.T) {
 func TestRender(t *testing.T) {}
 
 func TestNumImputs(t *testing.T) {
-	o, _ := NewOutput(44100.0)
+	o, _ := NewMainOutput(44100.0)
 	got, want := o.NumInputs(), len(o.inputs)
 	if got != want {
 		t.Errorf("NumInputs() returned %d, expected %d", got, want)
@@ -63,7 +63,7 @@ func TestNumImputs(t *testing.T) {
 }
 
 // func TestConnect(t *testing.T) {
-// 	o, _ := NewOutput(44100.0)
+// 	o, _ := NewMainOutput(44100.0)
 
 // 	c := make(Channel)
 // 	ok, err := o.Connect(c, 0)
@@ -73,7 +73,7 @@ func TestNumImputs(t *testing.T) {
 // }
 
 // func TestConnectInvalidChannel(t *testing.T) {
-// 	o, _ := NewOutput(44100.0)
+// 	o, _ := NewMainOutput(44100.0)
 
 // 	c := make(Channel)
 // 	ok, _ := o.Connect(c, 256)
@@ -82,7 +82,7 @@ func TestNumImputs(t *testing.T) {
 // 	}
 // }
 
-func validateOutput(t *testing.T, o *Output, sampleRate float64) {
+func validateOutput(t *testing.T, o *MainOutput, sampleRate float64) {
 	if o.Stream == nil {
 		t.Error("Failed to instantiate PortAudio output stream.")
 	}

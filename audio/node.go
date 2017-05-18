@@ -3,17 +3,17 @@ package audio
 type Buffer []float32
 type Channel chan Buffer
 
-type RenderNode interface {
+type Renderer interface {
 	SetSampleRate(sampleRate float64)
 	Render() (int, error)
 }
 
-type InputNode interface {
+type Input interface {
 	NumInputs() int
 	InputChannel(i int) Channel
 }
 
-type OutputNode interface {
+type Output interface {
 	NumOutputs() int
 	Connect(c Channel, i int) (bool, error)
 	Disconnect(i int)

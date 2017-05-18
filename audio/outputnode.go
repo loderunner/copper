@@ -4,15 +4,15 @@ import (
 	"github.com/gordonklaus/portaudio"
 )
 
-type Output struct {
+type MainOutput struct {
 	*portaudio.Stream
 	sampleRate float64
 	inputs     []Channel
 	overflow   []Buffer
 }
 
-func NewOutput(sampleRate float64) (*Output, error) {
-	output := Output{sampleRate: sampleRate}
+func NewMainOutput(sampleRate float64) (*MainOutput, error) {
+	o := MainOutput{sampleRate: sampleRate}
 
 	device, err := portaudio.DefaultOutputDevice()
 	if device == nil {
@@ -20,11 +20,11 @@ func NewOutput(sampleRate float64) (*Output, error) {
 	}
 
 	numChannels := device.MaxOutputChannels
-	output.inputs = make([]Channel, numChannels)
+	o.inputs = make([]Channel, numChannels)
 	for i := 0; i < numChannels; i++ {
-		output.inputs[i] = make(Channel)
+		o.inputs[i] = make(Channel)
 	}
-	ok, err := output.initOutputStream()
+	ok, err := o.initOutputStream()
 	if !ok {
 		return nil, err
 	}
@@ -34,39 +34,39 @@ func NewOutput(sampleRate float64) (*Output, error) {
 	for bufferSize < minSize {
 		bufferSize <<= 1
 	}
-	output.overflow = make([]Buffer, numChannels)
+	o.overflow = make([]Buffer, numChannels)
 	for i := 0; i < numChannels; i++ {
-		output.overflow[i] = make(Buffer, bufferSize)
+		o.overflow[i] = make(Buffer, bufferSize)
 	}
 
-	return &output, nil
+	return &o, nil
 }
 
-func (output *Output) SetSampleRate(sampleRate float64) {
-	output.sampleRate = sampleRate
-	output.initOutputStream()
+func (o *MainOutput) SetSampleRate(sampleRate float64) {
+	o.sampleRate = sampleRate
+	o.initOutputStream()
 }
 
-func (output *Output) initOutputStream() (bool, error) {
+func (o *MainOutput) initOutputStream() (bool, error) {
 	var err error
-	output.Stream, err = portaudio.OpenDefaultStream(0, len(output.inputs), output.sampleRate, 0, output.streamCallback)
-	if output.Stream == nil {
+	o.Stream, err = portaudio.OpenDefaultStream(0, len(o.inputs), o.sampleRate, 0, o.streamCallback)
+	if o.Stream == nil {
 		return false, err
 	}
 	return true, nil
 }
 
-func (output *Output) Render()        {}
-func (output *Output) NumInputs() int { return len(output.inputs) }
+func (o *MainOutput) Render()        {}
+func (o *MainOutput) NumInputs() int { return len(o.inputs) }
 
-func (output *Output) InputChannel(i int) Channel {
-	return output.inputs[i]
+func (o *MainOutput) InputChannel(i int) Channel {
+	return o.inputs[i]
 }
 
-func (output *Output) streamCallback(outputBuffers []Buffer) {
+func (o *MainOutput) streamCallback(outputBuffers []Buffer) {
 	for i, outputChannelBuffer := range outputBuffers {
-		inputChannel := output.inputs[i]
-		overflow := output.overflow[i]
+		inputChannel := o.inputs[i]
+		overflow := o.overflow[i]
 
 		j := 0
 		// If remaining overflow, copy to output
@@ -80,10 +80,10 @@ func (output *Output) streamCallback(outputBuffers []Buffer) {
 			j += copy(outputChannelBuffer[j:], inputChannelBuffer) // Store overflowing buffer for next callback
 			if j > len(outputChannelBuffer) {
 				remaining := j - len(outputChannelBuffer)
-				output.overflow[i] = overflow[:remaining]
-				copy(output.overflow[i], inputChannelBuffer[remaining:])
+				o.overflow[i] = overflow[:remaining]
+				copy(o.overflow[i], inputChannelBuffer[remaining:])
 			} else {
-				output.overflow[i] = overflow[:0]
+				o.overflow[i] = overflow[:0]
 			}
 		}
 	}
