@@ -58,29 +58,29 @@ func TestNumImputs(t *testing.T) {
 	o, _ := NewOutput(44100.0)
 	got, want := o.NumInputs(), len(o.inputs)
 	if got != want {
-		t.Error("NumInputs() returned %d, expected %d", got, want)
+		t.Errorf("NumInputs() returned %d, expected %d", got, want)
 	}
 }
 
-func TestConnect(t *testing.T) {
-	o, _ := NewOutput(44100.0)
+// func TestConnect(t *testing.T) {
+// 	o, _ := NewOutput(44100.0)
 
-	c := make(Channel)
-	ok, err := o.Connect(c, 0)
-	if !ok {
-		t.Error("Failed to channel to input 0.", err)
-	}
-}
+// 	c := make(Channel)
+// 	ok, err := o.Connect(c, 0)
+// 	if !ok {
+// 		t.Error("Failed to channel to input 0.", err)
+// 	}
+// }
 
-func TestConnectInvalidChannel(t *testing.T) {
-	o, _ := NewOutput(44100.0)
+// func TestConnectInvalidChannel(t *testing.T) {
+// 	o, _ := NewOutput(44100.0)
 
-	c := make(Channel)
-	ok, _ := o.Connect(c, 256)
-	if ok {
-		t.Error("Unexpected connection to input 256.")
-	}
-}
+// 	c := make(Channel)
+// 	ok, _ := o.Connect(c, 256)
+// 	if ok {
+// 		t.Error("Unexpected connection to input 256.")
+// 	}
+// }
 
 func validateOutput(t *testing.T, o *Output, sampleRate float64) {
 	if o.Stream == nil {
@@ -91,6 +91,11 @@ func validateOutput(t *testing.T, o *Output, sampleRate float64) {
 	}
 	if len(o.inputs) == 0 {
 		t.Error("Output node has no inputs.")
+	}
+	for i, c := range o.inputs {
+		if c == nil {
+			t.Errorf("Input channel %d is nil.", i)
+		}
 	}
 	if len(o.overflow) == 0 {
 		t.Error("Output node has no overflow buffers.")

@@ -21,6 +21,9 @@ func NewOutput(sampleRate float64) (*Output, error) {
 
 	numChannels := device.MaxOutputChannels
 	output.inputs = make([]Channel, numChannels)
+	for i := 0; i < numChannels; i++ {
+		output.inputs[i] = make(Channel)
+	}
 	ok, err := output.initOutputStream()
 	if !ok {
 		return nil, err
@@ -56,19 +59,8 @@ func (output *Output) initOutputStream() (bool, error) {
 func (output *Output) Render()        {}
 func (output *Output) NumInputs() int { return len(output.inputs) }
 
-func (output *Output) Connect(c Channel, i int) (bool, error) {
-	if i >= len(output.inputs) {
-		return false, Error("Input index out of bounds.")
-	}
-
-	output.inputs[i] = c
-	return true, nil
-}
-
-func (output *Output) Disconnect(i int) {
-	if i < len(output.inputs) {
-		output.inputs[i] = nil
-	}
+func (output *Output) InputChannel(i int) Channel {
+	return output.inputs[i]
 }
 
 func (output *Output) streamCallback(outputBuffers []Buffer) {

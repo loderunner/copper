@@ -10,13 +10,13 @@ type RenderNode interface {
 
 type InputNode interface {
 	NumInputs() int
-	Connect(c Channel, i int) (bool, error)
-	Disconnect(i int)
+	InputChannel(i int) Channel
 }
 
 type OutputNode interface {
-	NumChannels() int
-	Channel(i int) Channel
+	NumOutputs() int
+	Connect(c Channel, i int) (bool, error)
+	Disconnect(i int)
 }
 
 type Error string
