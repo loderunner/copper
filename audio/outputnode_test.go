@@ -24,13 +24,33 @@ func tearDown() {
 func TestNewOutput(t *testing.T) {
 	o, err := NewOutput(44100.0)
 	if o == nil {
-		t.Error("Failed to instantiate output node.", err)
+		t.Fatal("Failed to instantiate output node.", err)
 	}
+	validateOutput(t, o, 44100.0)
+
+	o, err = NewOutput(0)
+	if o != nil {
+		t.Fatal("Instantiated output mode with invalid sample rate.")
+	}
+}
+
+func TestSetSampleRate(t *testing.T) {
+	o, err := NewOutput(44100.0)
+	if o == nil {
+		t.Fatal("Failed to instantiate output node.", err)
+	}
+	validateOutput(t, o, 44100.0)
+
+	o.SetSampleRate(48000.0)
+	validateOutput(t, o, 48000.0)
+}
+
+func validateOutput(t *testing.T, o *Output, sampleRate float64) {
 	if o.Stream == nil {
 		t.Error("Failed to instantiate PortAudio output stream.")
 	}
-	if o.sampleRate != 44100.0 {
-		t.Errorf("Invalid sample rate. Expected 44100.0, got %f", o.sampleRate)
+	if o.sampleRate != sampleRate {
+		t.Errorf("Invalid sample rate. Expected %f, got %f", sampleRate, o.sampleRate)
 	}
 	if len(o.inputs) == 0 {
 		t.Error("Output node has no inputs.")
@@ -43,10 +63,5 @@ func TestNewOutput(t *testing.T) {
 				t.Errorf("Overflow buffer %d has 0 size.", i)
 			}
 		}
-	}
-
-	o, err = NewOutput(0)
-	if o != nil {
-		t.Error("Instantiated output mode with invalid sample rate.")
 	}
 }
