@@ -35,14 +35,20 @@ func TestNewOutput(t *testing.T) {
 }
 
 func TestSetSampleRate(t *testing.T) {
-	o, err := NewOutput(44100.0)
-	if o == nil {
-		t.Fatal("Failed to instantiate output node.", err)
-	}
-	validateOutput(t, o, 44100.0)
+	o, _ := NewOutput(44100.0)
 
 	o.SetSampleRate(48000.0)
 	validateOutput(t, o, 48000.0)
+}
+
+func TestRender(t *testing.T) {}
+
+func TestNumImputs(t *testing.T) {
+	o, _ := NewOutput(44100.0)
+	got, want := o.NumInputs(), len(o.inputs)
+	if got != want {
+		t.Error("NumInputs() returned %d, expected %d", got, want)
+	}
 }
 
 func validateOutput(t *testing.T, o *Output, sampleRate float64) {
